@@ -1,0 +1,431 @@
+{% load static tailwind_tags%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigHouse - Authentication</title>
+    {% tailwind_css %}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #3b82f6;
+        }
+        
+        .dark {
+            --bg-primary: #1e293b;
+            --bg-secondary: #0f172a;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #60a5fa;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .hero-pattern {
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(#e6e6e6 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
+        }
+        
+        .dark .hero-pattern {
+            background-image: radial-gradient(#334155 1.5px, transparent 1.5px);
+        }
+        
+        .theme-transition * {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        
+        .auth-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .auth-tabs .tab {
+            border-bottom: 2px solid transparent;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .auth-tabs .tab.tab-active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="theme-transition">
+    <!-- Navbar -->
+    <div class="navbar bg-white dark:bg-slate-800 shadow-md sticky top-0 z-50 theme-transition">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <label tabindex="0" class="btn btn-ghost lg:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+                </label>
+                <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-white dark:bg-slate-700 rounded-box w-52 theme-transition">
+                    <li><a href="{% url 'home' %}" class="dark:text-slate-200">Home</a></li>
+                    <li><a class="dark:text-slate-200">About Us</a></li>
+                    <li><a class="dark:text-slate-200">Contact</a></li>
+                    <li>
+                        <a class="justify-between dark:text-slate-200">
+                            Account
+                            <span class="badge">New</span>
+                        </a>
+                        <ul class="p-2 bg-white dark:bg-slate-700 theme-transition">
+                            {% if user.is_authenticated %}
+                            <li><a class="dark:text-slate-200" onclick="showPage('logout-page')">Logout</a></li>
+                            <li><a class="dark:text-slate-200">Profile</a></li>
+                            <li><a class="dark:text-slate-200">Rent Status</a></li>
+                            {% else %}
+                            <li><a class="dark:text-slate-200" onclick="showPage('login-page')">Login</a></li>
+                            {% endif %}
+                            <li><a class="dark:text-slate-200">Help</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- Placeholder Logo -->
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-2">BH</div>
+                <a class="btn btn-ghost normal-case text-xl text-gray-800 dark:text-white">BigHouse</a>
+            </div>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 text-gray-700 dark:text-slate-200">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a>About Us</a></li>
+                <li><a>Contact</a></li>
+                <li tabindex="0">
+                    <a>
+                        Account
+                        <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+                    </a>
+                    <ul class="p-2 bg-white dark:bg-slate-700 shadow-md rounded-box theme-transition">
+                        {% if user.is_authenticated %}
+                        <li><a class="dark:text-slate-200" onclick="showPage('logout-page')">Logout</a></li>
+                        <li><a class="dark:text-slate-200">Profile</a></li>
+                        <li><a class="dark:text-slate-200">Rent Status</a></li>
+                        {% else %}
+                        <li><a class="dark:text-slate-200" onclick="showPage('login-page')">Login</a></li>
+                        {% endif %}
+                        <li><a class="dark:text-slate-200">Help</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="navbar-end">
+            <div class="flex items-center">
+                <span class="mr-2 text-gray-600 dark:text-slate-300">Light</span>
+                <input type="checkbox" class="toggle toggle-md" id="theme-toggle" />
+                <span class="ml-2 text-gray-600 dark:text-slate-300">Dark</span>
+            </div>
+            {% if user.is_authenticated %}
+            <a class="btn btn-ghost ml-4 dark:text-white" onclick="showPage('login-page')">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Logout
+            </a>
+            {% else %}
+            <a class="btn btn-ghost ml-4 dark:text-white" onclick="showPage('login-page')">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Login
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+
+    <div class="flex-grow justify-items-center text-justify hero-pattern theme-transition py-12">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 64 64"
+            class="w-24 h-24 text-red-600"
+            fill="currentColor"
+            >
+            <!-- Triangle Background -->
+            <path d="M32 4 L60 60 H4 Z" />
+
+            <!-- Exclamation Mark Stem -->
+            <rect x="30" y="18" width="4" height="20" rx="1" ry="1" fill="white" />
+
+            <!-- Exclamation Mark Dot -->
+            <circle cx="32" cy="46" r="3" fill="white" />
+        </svg>
+
+        <p class="alert">Forbidden! You're already logged in!</p>
+    </div>
+
+    {% else %}
+
+    <!-- Login Page -->
+    <main class="page active flex-grow hero-pattern theme-transition py-12" id="login-page">
+        <div class="auth-container px-4">
+            <div class="flex flex-col items-center justify-center">
+                <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">Welcome to BigHouse</h1>
+                <p class="text-lg text-gray-600 dark:text-slate-300 mb-8">Sign in to manage your properties</p>
+                
+                <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden theme-transition">
+                    <!-- Tabs -->
+                    <div class="tabs auth-tabs w-full flex justify-center bg-gray-100 dark:bg-slate-700 p-2 theme-transition">
+                        <a class="tab tab-lg tab-active w-1/2 text-center font-medium dark:text-slate-300">Login</a> 
+                        <a class="tab tab-lg w-1/2 text-center font-medium dark:text-slate-300" onclick="showPage('register-page')">Register</a>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <div class="p-8">
+                        <form>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Email</span>
+                                </label>
+                                <input type="email" placeholder="Your email" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Password</span>
+                                </label>
+                                <input type="password" placeholder="Your password" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                                <label class="label mt-1">
+                                    <a href="#" class="label-text-alt link link-hover text-blue-600 dark:text-blue-400">Forgot password?</a>
+                                </label>
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label cursor-pointer justify-start">
+                                    <input type="checkbox" checked="checked" class="checkbox checkbox-primary checkbox-sm mr-2" />
+                                    <span class="label-text dark:text-slate-300">Remember me</span> 
+                                </label>
+                            </div>
+                            <div class="form-control mt-6">
+                                <button type="button" class="btn btn-primary" onclick="showPage('logout-page')">Login</button>
+                            </div>
+                        </form>
+                        
+                        <div class="divider my-6 dark:text-slate-300">OR</div>
+                        
+                        <div class="flex flex-col gap-4">
+                            <button class="btn btn-outline dark:border-slate-400 dark:text-white">
+                                <i class="fab fa-google text-red-500 mr-2"></i>
+                                Continue with Google
+                            </button>
+                            <button class="btn btn-outline dark:border-slate-400 dark:text-white">
+                                <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                                Continue with Facebook
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600 dark:text-slate-300">Don't have an account? <a class="link link-hover text-blue-600 dark:text-blue-400" onclick="showPage('register-page')">Register now</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Register Page -->
+    <main class="page flex-grow hero-pattern theme-transition py-12" id="register-page">
+        <div class="auth-container px-4">
+            <div class="flex flex-col items-center justify-center">
+                <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">Create an Account</h1>
+                <p class="text-lg text-gray-600 dark:text-slate-300 mb-8">Join BigHouse to manage your properties</p>
+                
+                <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden theme-transition">
+                    <!-- Tabs -->
+                    <div class="tabs auth-tabs w-full flex justify-center bg-gray-100 dark:bg-slate-700 p-2 theme-transition">
+                        <a class="tab tab-lg w-1/2 text-center font-medium dark:text-slate-300" onclick="showPage('login-page')">Login</a> 
+                        <a class="tab tab-lg tab-active w-1/2 text-center font-medium dark:text-slate-300">Register</a>
+                    </div>
+                    
+                    <!-- Register Form -->
+                    <div class="p-8">
+                        <form>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text dark:text-slate-300">First Name</span>
+                                    </label>
+                                    <input type="text" placeholder="First name" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text dark:text-slate-300">Last Name</span>
+                                    </label>
+                                    <input type="text" placeholder="Last name" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                                </div>
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Email</span>
+                                </label>
+                                <input type="email" placeholder="Your email" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Phone Number</span>
+                                </label>
+                                <input type="tel" placeholder="Your phone number" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Password</span>
+                                </label>
+                                <input type="password" placeholder="Create a password" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label">
+                                    <span class="label-text dark:text-slate-300">Confirm Password</span>
+                                </label>
+                                <input type="password" placeholder="Confirm your password" class="input input-bordered form-input dark:bg-slate-700 dark:text-white dark:border-slate-600" />
+                            </div>
+                            <div class="form-control mb-4">
+                                <label class="label cursor-pointer justify-start">
+                                    <input type="checkbox" class="checkbox checkbox-primary checkbox-sm mr-2" />
+                                    <span class="label-text dark:text-slate-300">I agree to the <a href="#" class="link link-hover text-blue-600 dark:text-blue-400">Terms of Service</a> and <a href="#" class="link link-hover text-blue-600 dark:text-blue-400">Privacy Policy</a></span> 
+                                </label>
+                            </div>
+                            <div class="form-control mt-6">
+                                <button type="button" class="btn btn-primary" onclick="showPage('logout-page')">Create Account</button>
+                            </div>
+                        </form>
+                        
+                        <div class="divider my-6 dark:text-slate-300">OR</div>
+                        
+                        <div class="flex flex-col gap-4">
+                            <button class="btn btn-outline dark:border-slate-400 dark:text-white">
+                                <i class="fab fa-google text-red-500 mr-2"></i>
+                                Continue with Google
+                            </button>
+                            <button class="btn btn-outline dark:border-slate-400 dark:text-white">
+                                <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                                Continue with Facebook
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600 dark:text-slate-300">Already have an account? <a class="link link-hover text-blue-600 dark:text-blue-400" onclick="showPage('login-page')">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+    {% endif %}
+
+    <!-- Logout Page -->
+    <main class="page flex-grow hero-pattern theme-transition py-12" id="logout-page">
+        <div class="auth-container px-4">
+            <div class="flex flex-col items-center justify-center">
+                <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden theme-transition p-8 text-center">
+                    <div class="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-check-circle text-green-500 dark:text-green-400 text-4xl"></i>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">You're Logged In!</h2>
+                    <p class="text-gray-600 dark:text-slate-300 mb-6">Welcome back to BigHouse. You can now access your property management dashboard.</p>
+                    
+                    <div class="flex flex-col gap-4 mb-6">
+                        <div class="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center mr-4">
+                                <i class="fas fa-user text-blue-500 dark:text-blue-400"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="font-medium text-gray-800 dark:text-white">John Doe</p>
+                                <p class="text-sm text-gray-600 dark:text-slate-300">john.doe@example.com</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg mb-6">
+                        <p class="text-gray-600 dark:text-slate-300 mb-2">Last login: Today at 2:45 PM</p>
+                        <p class="text-gray-600 dark:text-slate-300">From: San Francisco, CA</p>
+                    </div>
+                    
+                    <div class="form-control mt-6">
+                        <button class="btn btn-primary mb-4">Go to Dashboard</button>
+                        <button class="btn btn-outline dark:border-slate-400 dark:text-white" onclick="showPage('login-page')">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-10 bg-white dark:bg-slate-900 text-black dark:text-white theme-transition">
+        <div>
+            <!-- Placeholder Logo -->
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-2">BH</div>
+                <div class="font-bold text-2xl">BigHouse</div>
+            </div>
+            <p class="font-bold">
+                Professional Rent Management <br>Simplifying property management since 2023
+            </p>
+            <p>Copyright © 2023 - All rights reserved</p>
+        </div>
+        <div>
+            <div class="grid grid-flow-col gap-4">
+                <a><i class="fab fa-twitter text-2xl"></i></a>
+                <a><i class="fab fa-youtube text-2xl"></i></a>
+                <a><i class="fab fa-facebook text-2xl"></i></a>
+                <a><i class="fab fa-instagram text-2xl"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for page navigation and theme -->
+    <script src="{% static 'accounts/js/login.js' %}">  
+    </script>
+</body>
+</html>

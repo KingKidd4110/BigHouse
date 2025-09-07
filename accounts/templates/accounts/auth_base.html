@@ -1,0 +1,191 @@
+{% load static tailwind_tags%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigHouse - Authentication</title>
+    {% tailwind_css %}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #3b82f6;
+        }
+        
+        .dark {
+            --bg-primary: #1e293b;
+            --bg-secondary: #0f172a;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #60a5fa;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .hero-pattern {
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(#e6e6e6 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
+        }
+        
+        .dark .hero-pattern {
+            background-image: radial-gradient(#334155 1.5px, transparent 1.5px);
+        }
+        
+        .theme-transition * {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        
+        .auth-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .auth-tabs .tab {
+            border-bottom: 2px solid transparent;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .auth-tabs .tab.tab-active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="theme-transition">
+    <!-- Navbar -->
+    <div class="navbar bg-white dark:bg-slate-800 shadow-md sticky top-0 z-50 theme-transition">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <label tabindex="0" class="btn btn-ghost lg:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+                </label>
+                <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-white dark:bg-slate-700 rounded-box w-52 theme-transition">
+                    <li><a href="{% url 'home' %}" class="dark:text-slate-200">Home</a></li>
+                    <li>
+                        <a class="justify-between dark:text-slate-200">
+                            Account
+                            <span class="badge">New</span>
+                        </a>
+                        <ul class="p-2 bg-white dark:bg-slate-700 theme-transition">
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'logout' %}" class="dark:text-slate-200" >Logout</a></li>
+                            <li><a href="{% url 'profile' %}" class="dark:text-slate-200">Profile</a></li>
+                            <li><a class="dark:text-slate-200">Rent Status</a></li>
+                            {% else %}
+                            <li><a href="{% url 'login' %}" class="dark:text-slate-200" >Login</a></li>
+                            {% endif %}
+                            <li><a class="dark:text-slate-200">Help</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- Placeholder Logo -->
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-2">
+                    <img src="{% static 'BigHouseWeb/images/logo.png' %}" alt="BigHouse Logo" class="w-full h-full object-cover rounded-lg">
+                </div>
+                <a href="{% url 'home' %}" class="btn btn-ghost normal-case text-xl text-gray-800 dark:text-white">BigHouse</a>
+            </div>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 text-gray-700 dark:text-slate-200">
+                <li><a href="{% url 'home' %}">Home</a></li>
+            </ul>
+        </div>
+        <div class="navbar-end">
+            <div class="flex items-center">
+                <span class="mr-2 text-gray-600 dark:text-slate-300">Light</span>
+                <input type="checkbox" class="toggle toggle-md" id="theme-toggle" />
+                <span class="ml-2 text-gray-600 dark:text-slate-300">Dark</span>
+            </div>
+        </div>
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    {% block extra_js %}
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-10 bg-white dark:bg-slate-900 text-black dark:text-white theme-transition">
+        <div>
+            <!-- Placeholder Logo -->
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-2">BH</div>
+                <div class="font-bold text-2xl">BigHouse</div>
+            </div>
+            <p class="font-bold">
+                Professional Rent Management <br>Simplifying property management since 2023
+            </p>
+            <p>Copyright © 2023 - All rights reserved</p>
+        </div>
+        <div>
+            <div class="grid grid-flow-col gap-4">
+                <a><i class="fab fa-twitter text-2xl"></i></a>
+                <a><i class="fab fa-youtube text-2xl"></i></a>
+                <a><i class="fab fa-facebook text-2xl"></i></a>
+                <a><i class="fab fa-instagram text-2xl"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for page navigation and theme -->
+    <script src="{% static 'accounts/js/login.js' %}">  
+    </script>
+</body>
+</html>

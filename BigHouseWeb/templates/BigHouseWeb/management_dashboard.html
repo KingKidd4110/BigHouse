@@ -1,0 +1,187 @@
+<!-- templates/management_dashboard.html -->
+{% extends 'BigHouseWeb/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8">Management Dashboard</h1>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Add House Form -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Add New House</h2>
+            
+            <form method="POST" action="{% url 'management_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="add_house" value="true">
+                
+                <div class="space-y-4">
+                    {% for field in house_form %}
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text dark:text-slate-300">{{ field.label }}</span>
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-error text-sm mt-1">
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary">Add House</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Create Alert Form -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Create Alert</h2>
+            
+            <form method="POST" action="{% url 'management_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="add_alert" value="true">
+                
+                <div class="space-y-4">
+                    {% for field in alert_form %}
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text dark:text-slate-300">{{ field.label }}</span>
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-error text-sm mt-1">
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary">Create Alert</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Available Houses -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-8 theme-transition">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Available Houses</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Building</th>
+                        <th>House Number</th>
+                        <th>Rent Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for house in houses %}
+                    <tr>
+                        <td>{{ house.building.name }}</td>
+                        <td>{{ house.house_number }}</td>
+                        <td>${{ house.rent_amount }}</td>
+                        <td>
+                            {% if house.is_occupied %}
+                                <span class="badge badge-error">Occupied</span>
+                            {% else %}
+                                <span class="badge badge-success">Available</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No houses available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Current Tenants -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Current Tenants</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th>Building</th>
+                        <th>House Number</th>
+                        <th>Rent Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tenant in tenants %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center space-x-3">
+                                <div class="avatar">
+                                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700">
+                                        {% if tenant.user.userprofile.profile_picture %}
+                                            <img src="{{ tenant.user.userprofile.profile_picture.url }}" alt="Tenant Avatar">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="font-bold">{{ tenant.user.get_full_name|default:tenant.user.username }}</div>
+                                    <div class="text-sm opacity-50">{{ tenant.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ tenant.house.building.name }}</td>
+                        <td>{{ tenant.house.house_number }}</td>
+                        <td>
+                            {% with tenant.rent_payments.last as last_payment %}
+                                {% if last_payment %}
+                                    <span class="badge {% if last_payment.status == 'paid' %}badge-success{% elif last_payment.status == 'due' %}badge-warning{% else %}badge-error{% endif %}">
+                                        {{ last_payment.status|title }}
+                                    </span>
+                                    {% if last_payment.status != 'paid' %}
+                                        <button class="btn btn-xs btn-success ml-2" onclick="markRentPaid({{ last_payment.id }})">Mark Paid</button>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-warning">No Payment Record</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <button class="btn btn-error btn-xs" onclick="confirmDelete({{ tenant.id }})">Remove Tenant</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No tenants found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for actions -->
+<script>
+function confirmDelete(tenantId) {
+    if (confirm('Are you sure you want to remove this tenant? This action cannot be undone.')) {
+        window.location.href = "{% url 'delete_tenant' 0 %}".replace('0', tenantId);
+    }
+}
+
+function markRentPaid(paymentId) {
+    if (confirm('Mark this rent as paid?')) {
+        window.location.href = "{% url 'mark_rent_paid' 0 %}".replace('0', paymentId);
+    }
+}
+</script>
+{% endblock %}

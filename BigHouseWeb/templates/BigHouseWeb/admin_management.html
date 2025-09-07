@@ -1,0 +1,197 @@
+<!-- templates/admin_management.html -->
+{% extends 'BigHouseWeb/base.html' %}
+{% load static %}
+
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8">Admin Management</h1>
+    
+    {% if request.user.is_superuser %}
+    <!-- Add Building Form (Superuser only) -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-8 theme-transition">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Add New Building</h2>
+        
+        <form method="POST" action="{% url 'admin_management' %}">
+            {% csrf_token %}
+            <input type="hidden" name="add_building" value="true">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for field in building_form %}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text dark:text-slate-300">{{ field.label }}</span>
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="text-error text-sm mt-1">
+                        {{ field.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-control mt-6">
+                <button type="submit" class="btn btn-primary">Add Building</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+    
+    <!-- Buildings List -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-8 theme-transition">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Buildings</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Owner</th>
+                        <th>Houses</th>
+                        <th>Managers</th>
+                        {% if request.user.is_superuser %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for building in buildings %}
+                    <tr>
+                        <td>{{ building.name }}</td>
+                        <td>{{ building.address|truncatewords:5 }}</td>
+                        <td>{{ building.owner.username }}</td>
+                        <td>{{ building.house_count }}</td>
+                        <td>{{ building.managers.count }}</td>
+                        {% if request.user.is_superuser %}
+                        <td>
+                            <button class="btn btn-error btn-xs" onclick="confirmDelete({{ building.id }})">Delete</button>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="text-center">No buildings found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- User Management -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">User Management</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Current Role</th>
+                        <th>Managed Building</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center space-x-3">
+                                <div class="avatar">
+                                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700">
+                                        {% if user.userprofile.profile_picture %}
+                                            <img src="{{ user.userprofile.profile_picture.url }}" alt="User Avatar">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="font-bold">{{ user.username }}</div>
+                                    {% if user.get_full_name %}
+                                    <div class="text-sm opacity-50">{{ user.get_full_name }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="badge {% if user.userprofile.user_type == 'owner' %}badge-primary{% elif user.userprofile.user_type == 'manager' %}badge-secondary{% else %}badge-ghost{% endif %}">
+                                {{ user.userprofile.get_user_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.userprofile.managed_building %}
+                                {{ user.userprofile.managed_building.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            <label for="user-modal-{{ user.id }}" class="btn btn-primary btn-xs">Edit Role</label>
+                        </td>
+                    </tr>
+                    
+                    <!-- Edit User Modal -->
+                    <input type="checkbox" id="user-modal-{{ user.id }}" class="modal-toggle" />
+                    <div class="modal">
+                        <div class="modal-box">
+                            <h3 class="font-bold text-lg">Edit User: {{ user.username }}</h3>
+                            
+                            <form method="POST" action="{% url 'admin_management' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="update_user" value="true">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">User Type</span>
+                                    </label>
+                                    <select name="user_type" class="select select-bordered w-full">
+                                        <option value="tenant" {% if user.userprofile.user_type == 'tenant' %}selected{% endif %}>Tenant</option>
+                                        <option value="manager" {% if user.userprofile.user_type == 'manager' %}selected{% endif %}>Property Manager</option>
+                                        {% if request.user.is_superuser %}
+                                        <option value="owner" {% if user.userprofile.user_type == 'owner' %}selected{% endif %}>Property Owner</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                                
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">Managed Building (for managers)</span>
+                                    </label>
+                                    <select name="managed_building" class="select select-bordered w-full">
+                                        <option value="">-- None --</option>
+                                        {% for building in buildings %}
+                                        <option value="{{ building.id }}" {% if user.userprofile.managed_building.id == building.id %}selected{% endif %}>
+                                            {{ building.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="modal-action">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <label for="user-modal-{{ user.id }}" class="btn">Cancel</label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for actions -->
+<script>
+function confirmDelete(buildingId) {
+    if (confirm('Are you sure you want to delete this building? All managers will be converted back to tenants and all associated data will be deleted.')) {
+        window.location.href = "{% url 'delete_building' 0 %}".replace('0', buildingId);
+    }
+}
+</script>
+{% endblock %}
