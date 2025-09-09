@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Building, House, ManagementAlert
+from .models import UserProfile, Building, House, ManagementAlert, ContactUs
 
 class CustomUserCreationForm(UserCreationForm):
     phone_number = forms.CharField(max_length=15, required=False)
@@ -21,25 +21,24 @@ class CustomUserCreationForm(UserCreationForm):
             user_profile.save()
         return user
 
+
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['user_type', 'profile_picture', 'phone_number', 'managed_building']
+        fields = ['profile_picture', 'phone_number']
+        widgets = {
+            'phone_number': forms.TextInput(attrs={'placeholder': 'Your phone number'}),
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show buildings for manager assignment
-        self.fields['managed_building'].queryset = Building.objects.all()
-        # Only allow changing to manager or tenant, not owner
-        self.fields['user_type'].choices = [
-            ('tenant', 'Tenant'),
-            ('manager', 'Property Manager'),
-        ]
-
+        self.fields['profile_picture'].required = False
+        
 class BuildingForm(forms.ModelForm):
     class Meta:
         model = Building
         fields = ['name', 'address']
+
 
 class HouseForm(forms.ModelForm):
     class Meta:
@@ -59,6 +58,7 @@ class HouseForm(forms.ModelForm):
             else:
                 self.fields['building'].queryset = Building.objects.none()
 
+
 class AlertForm(forms.ModelForm):
     class Meta:
         model = ManagementAlert
@@ -77,3 +77,23 @@ class AlertForm(forms.ModelForm):
                 self.fields['building'].queryset = Building.objects.all()
             else:
                 self.fields['building'].queryset = Building.objects.none()
+
+
+class ContactUsForm(forms.ModelForm):
+    class Meta:
+        model = ContactUs
+        fields = ['name', 'email', 'message']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'input input-bordered dark:bg-slate-700 dark:text-white dark:border-slate-600',
+                'placeholder': 'Your Name'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'input input-bordered dark:bg-slate-700 dark:text-white dark:border-slate-600',
+                'placeholder': 'Your Email'
+            }),
+            'message': forms.Textarea(attrs={
+                'class': 'textarea textarea-bordered h-24 dark:bg-slate-700 dark:text-white dark:border-slate-600',
+                'placeholder': 'Your Message'
+            }),
+        }

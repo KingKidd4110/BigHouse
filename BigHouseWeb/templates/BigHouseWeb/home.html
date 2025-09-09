@@ -156,29 +156,31 @@
             
             <div class="flex flex-col md:flex-row gap-8">
                 <div class="md:w-1/2 bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg theme-transition">
-                    <form>
+                    <form id="contact-form">
+                        {% csrf_token %}
                         <div class="form-control mb-4">
                             <label class="label">
                                 <span class="label-text dark:text-slate-300">Your Name</span>
                             </label>
-                            <input type="text" placeholder="Name" class="input input-bordered dark:bg-slate-700 text-white dark:text-white dark:border-slate-600" />
+                            <input type="text" name="name" placeholder="Name" class="input input-bordered dark:bg-slate-700 dark:text-white dark:border-slate-600" required />
                         </div>
                         <div class="form-control mb-4">
                             <label class="label">
                                 <span class="label-text dark:text-slate-300">Your Email</span>
                             </label>
-                            <input type="email" placeholder="Email" class="input input-bordered dark:bg-slate-700 text-white dark:text-white dark:border-slate-600" />
+                            <input type="email" name="email" placeholder="Email" class="input input-bordered dark:bg-slate-700 dark:text-white dark:border-slate-600" required />
                         </div>
                         <div class="form-control mb-4">
                             <label class="label">
                                 <span class="label-text dark:text-slate-300">Message</span>
                             </label>
-                            <textarea class="textarea textarea-bordered h-24 dark:bg-slate-700 dark:text-white text-white dark:border-slate-600" placeholder="Message"></textarea>
+                            <textarea name="message" class="textarea textarea-bordered h-24 dark:bg-slate-700 dark:text-white dark:border-slate-600" placeholder="Message" required></textarea>
                         </div>
                         <div class="form-control mt-6">
-                            <button class="btn btn-primary">Send Message</button>
+                            <button type="submit" class="btn btn-primary">Send Message</button>
                         </div>
                     </form>
+                    <div id="form-message" class="mt-4 hidden"></div>
                 </div>
                 <div class="md:w-1/2">
                     <div class="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg h-full theme-transition">
@@ -211,5 +213,58 @@
             </div>
         </div>
     </section>
+
+<!-- Add this JavaScript at the bottom of the page -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contactForm = document.getElementById('contact-form');
+        const formMessage = document.getElementById('form-message');
+        
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(contactForm);
+            
+            fetch('{% url "contact_us" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    formMessage.textContent = data.message;
+                    formMessage.className = 'mt-4 alert alert-success';
+                    formMessage.classList.remove('hidden');
+                    contactForm.reset();
+                    
+                    // Hide message after 5 seconds
+                    setTimeout(() => {
+                        formMessage.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    // Handle form errors
+                    let errorText = 'Please correct the errors below:';
+                    for (const field in data.errors) {
+                        data.errors[field].forEach(error => {
+                            errorText += `\n• ${error.message}`;
+                        });
+                    }
+                    formMessage.textContent = errorText;
+                    formMessage.className = 'mt-4 alert alert-error';
+                    formMessage.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                formMessage.textContent = 'An error occurred. Please try again.';
+                formMessage.className = 'mt-4 alert alert-error';
+                formMessage.classList.remove('hidden');
+                console.error('Error:', error);
+            });
+        });
+    });
+    </script>
 
 {% endblock content %}

@@ -1,6 +1,6 @@
 # admin.py
 from django.contrib import admin
-from .models import UserProfile, Building, House, Tenant, RentPayment, ManagementAlert
+from .models import UserProfile, Building, House, Tenant, RentPayment, ManagementAlert, ContactUs
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -35,3 +35,10 @@ class RentPaymentAdmin(admin.ModelAdmin):
 class ManagementAlertAdmin(admin.ModelAdmin):
     list_display = ['title', 'building', 'created_at', 'is_active']
     list_filter = ['building', 'is_active']
+
+@admin.register(ContactUs)
+class ContactUsAdmin(admin.ModelAdmin):
+    list_display = ['name', 'email', 'submitted_at']
+    list_filter = ['submitted_at']
+    search_fields = ['name', 'email', 'message']
+    readonly_fields = ['submitted_at']

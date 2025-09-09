@@ -2,7 +2,6 @@
 {% extends 'BigHouseWeb/base.html' %}
 {% load static %}
 
-{% block title %}BigHouse - My Profile{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -30,12 +29,16 @@
                         <p class="text-gray-800 dark:text-white">{{ user.email }}</p>
                     </div>
                     
-                    {% if user_profile.phone_number %}
                     <div>
                         <h3 class="text-sm font-semibold text-gray-500 dark:text-slate-400 mb-1">Phone</h3>
-                        <p class="text-gray-800 dark:text-white">{{ user_profile.phone_number }}</p>
+                        <p class="text-gray-800 dark:text-white">
+                            {% if user_profile.phone_number %}
+                                {{ user_profile.phone_number }}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </p>
                     </div>
-                    {% endif %}
                     
                     {% if house %}
                     <div>
@@ -54,51 +57,49 @@
                     </div>
                     {% endif %}
                 </div>
+                
+                <!-- Edit Profile Button -->
+                <label for="edit-profile-modal" class="btn btn-primary btn-block mt-6">
+                    <i class="fas fa-edit mr-2"></i>Edit Profile
+                </label>
             </div>
+            
+            <!-- Rent Status Card -->
+            {% if user_profile.user_type == 'tenant' and house %}
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mt-6 theme-transition">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Rent Status</h2>
+                
+                <div class="flex items-center mb-4">
+                    {% if rent_status == 'paid' %}
+                    <div class="badge badge-success gap-2">
+                        <i class="fas fa-check-circle"></i> Paid
+                    </div>
+                    {% elif rent_status == 'overdue' %}
+                    <div class="badge badge-error gap-2">
+                        <i class="fas fa-exclamation-circle"></i> Overdue
+                    </div>
+                    {% elif rent_status == 'due_soon' %}
+                    <div class="badge badge-warning gap-2">
+                        <i class="fas fa-clock"></i> Due Soon
+                    </div>
+                    {% else %}
+                    <div class="badge badge-ghost gap-2">
+                        <i class="fas fa-question-circle"></i> Unknown
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <a href="{% url 'rent_status' %}" class="btn btn-outline btn-block dark:border-slate-400 dark:text-white">
+                    <i class="fas fa-credit-card mr-2"></i>Check Payments or Pay
+                </a>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Main Content -->
         <div class="w-full md:w-2/3">
-            <!-- Rent Status -->
-            {% if house %}
-            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 theme-transition">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Rent Status</h2>
-                
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>Due Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Paid Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for payment in rent_payments %}
-                            <tr>
-                                <td>{{ payment.due_date }}</td>
-                                <td>${{ payment.amount }}</td>
-                                <td>
-                                    <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'due' %}badge-warning{% else %}badge-error{% endif %}">
-                                        {{ payment.status|title }}
-                                    </span>
-                                </td>
-                                <td>{% if payment.paid_date %}{{ payment.paid_date }}{% else %}—{% endif %}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center">No rent records found.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-            
             <!-- Management Alerts -->
-            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 theme-transition">
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Management Alerts</h2>
                 
                 {% if alerts %}
@@ -115,7 +116,81 @@
                 <p class="text-gray-600 dark:text-slate-400">No alerts at this time.</p>
                 {% endif %}
             </div>
+            
+            <!-- Recent Payments (for tenants) -->
+            {% if user_profile.user_type == 'tenant' and house %}
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 theme-transition">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Recent Payments</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>Date Paid</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in rent_payments %}
+                            <tr>
+                                <td>{% if payment.paid_date %}{{ payment.paid_date }}{% else %}—{% endif %}</td>
+                                <td>${{ payment.amount }}</td>
+                                <td>
+                                    <span class="badge {% if payment.status == 'paid' %}badge-success{% elif payment.status == 'due' %}badge-warning{% else %}badge-error{% endif %}">
+                                        {{ payment.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ payment.due_date }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No payment records found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <a href="{% url 'rent_status' %}" class="link link-primary">View all payments</a>
+                </div>
+            </div>
+            {% endif %}
         </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<input type="checkbox" id="edit-profile-modal" class="modal-toggle" />
+<div class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Profile</h3>
+        
+        <form method="POST" action="{% url 'profile' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="update_profile" value="true">
+            
+            <div class="form-control mt-4">
+                <label class="label">
+                    <span class="label-text">Profile Picture</span>
+                </label>
+                <input type="file" name="profile_picture" class="file-input file-input-bordered w-full">
+            </div>
+            
+            <div class="form-control mt-4">
+                <label class="label">
+                    <span class="label-text">Phone Number</span>
+                </label>
+                <input type="text" name="phone_number" value="{{ form.phone_number.value|default:'' }}" placeholder="Your phone number" class="input input-bordered w-full">
+            </div>
+            
+            <div class="modal-action">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <label for="edit-profile-modal" class="btn">Cancel</label>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

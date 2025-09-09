@@ -95,9 +95,11 @@
                     {% if user.is_authenticated %}
                     <li><a href="{% url 'management_dashboard' %}" class="dark:text-slate-200">Dashboard</a></li>
                     {% endif %}
-                    {% if user.is_authenticated %}
-                    <li><a href="{% url 'admin_management' %}" class="dark:text-slate-200">Admin</a></li>
+                    
+                    {% if user.is_superuser %}
+                        <li><a href="{% url 'contact_messages' %}" class="dark:text-slate-200">Contact Messages</a></li>
                     {% endif %}
+
                     <li>
                         <a class="justify-between dark:text-slate-200">
                             Account
@@ -112,6 +114,9 @@
                             <li><a href="{% url 'login' %}" class="dark:text-slate-200">Login</a></li>
                             <li><a href="{% url 'register' %}" class="dark:text-slate-200">Register</a></li>
                             {% endif %}
+                            {% if user.is_superuser %}
+                                <li><a href="{% url 'admin_management' %}" class="dark:text-slate-200">Admin</a></li>
+                            {% endif %}
                             
                             <li><a class="dark:text-slate-200">Help</a></li>
                         </ul>
@@ -123,7 +128,7 @@
                 <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl mr-2">
                     <img src="{% static 'BigHouseWeb/images/logo.png' %}" alt="BigHouse Logo" class="w-full h-full object-cover rounded-lg">
                 </div>
-                <a class="btn btn-ghost normal-case text-xl text-gray-800 dark:text-white">BigHouse</a>
+                <a href="{% url 'home' %}" class="btn btn-ghost normal-case text-xl text-gray-800 dark:text-white">BigHouse</a>
             </div>
         </div>
         <div class="navbar-center hidden lg:flex">
@@ -135,8 +140,9 @@
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'management_dashboard' %}" >Dashboard</a></li>
                 {% endif %}
-                {% if user.is_authenticated %}
-                <li><a href="{% url 'admin_management' %}" >Admin</a></li>
+                
+                {% if user.is_superuser %}
+                <li><a href="{% url 'contact_messages' %}" >Messages</a></li>
                 {% endif %}
                 <li tabindex="0">
                     <a>
@@ -150,6 +156,9 @@
                         {% else %}
                         <li><a href="{% url 'login' %}" class="dark:text-slate-200">Login</a></li>
                         <li><a href="{% url 'register' %}" class="dark:text-slate-200">Register</a></li>
+                        {% endif %}
+                        {% if user.is_superuser  %}
+                        <li><a href="{% url 'admin_management' %}" >Admin</a></li>
                         {% endif %}
                         <li><a class="dark:text-slate-200">Help</a></li>
                     </ul>
