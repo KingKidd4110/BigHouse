@@ -18,7 +18,7 @@ class UserProfile(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='tenant')
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='media/profile_pics/images', blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True)
     managed_building = models.ForeignKey('Building', on_delete=models.SET_NULL, null=True, blank=True, related_name='managers')
     

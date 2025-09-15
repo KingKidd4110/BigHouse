@@ -52,6 +52,8 @@ class HouseForm(forms.ModelForm):
             # Show only buildings owned by the current user
             if user.userprofile.user_type == 'owner':
                 self.fields['building'].queryset = Building.objects.filter(owner=user)
+            elif user.userprofile.user_type == 'manager':
+                self.fields['building'].queryset = Building.objects.filter(managers=user.userprofile)
             # Show all buildings for superusers
             elif user.is_superuser:
                 self.fields['building'].queryset = Building.objects.all()
